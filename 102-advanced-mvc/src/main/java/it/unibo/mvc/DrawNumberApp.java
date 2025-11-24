@@ -47,7 +47,7 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * reads the configuration from the file system and returns a configuration.
      * 
      * @param path config path
-     * @param loader a map matching each property of the config to the it should be set
+     * @param loader a map matching each option of the config to the it should be set
      * @param builder the configuration builder itself
      * @return a configuration. it is NOT required to be valid,
      * it is up to the caller to handle an inconsisten config (not load game or load a default config)
