@@ -8,6 +8,12 @@ tasks.javadoc {
     isFailOnError = false
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 repositories {
     mavenCentral()
 }

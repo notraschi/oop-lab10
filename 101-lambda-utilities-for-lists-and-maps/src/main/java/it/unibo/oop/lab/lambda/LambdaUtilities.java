@@ -63,8 +63,9 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Optional.filter
          */
+        // return list.stream().map(Optional::ofNullable).map(e -> e.filter(pre)).toList();
         final List<Optional<T>> result = new ArrayList<>(list.size());
-        list.forEach(e -> result.add(Optional.of(e).filter(pre)));
+        list.forEach(e -> result.add(Optional.ofNullable(e).filter(pre)));
         return result;
     }
 
@@ -85,11 +86,17 @@ public final class LambdaUtilities {
          * Suggestion: consider Map.merge
          */
         final Map<R, Set<T>> result = new LinkedHashMap<>();
-        list.forEach(e -> result.merge(op.apply(e), Set.of(e), (current, added) -> {
-            final Set<T> merged = new LinkedHashSet<>(current);
-            merged.addAll(added);
-            return merged;
-        }));
+        list.forEach(e ->
+            result.merge(
+                op.apply(e), 
+                Set.of(e), 
+                (current, added) -> {
+                    final Set<T> merged = new LinkedHashSet<>(current);
+                    merged.addAll(added);
+                    return merged;
+                }
+            )
+        );
         return result;
     }
 
@@ -112,7 +119,7 @@ public final class LambdaUtilities {
          * Keep in mind that a map can be iterated through its forEach method
          */
         final Map<K, V> result = new LinkedHashMap<>();
-        map.forEach((k, v) -> result.put(k, v.orElse(def.get())));
+        map.forEach((k, v) -> result.put(k, v.orElseGet(def))); // NOTE: orElse vs orElseGet
         return result;
     }
 
