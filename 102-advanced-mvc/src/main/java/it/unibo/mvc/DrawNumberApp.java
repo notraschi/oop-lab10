@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +14,10 @@ import java.util.function.Consumer;
 /**
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
+    private static final String MAX = "maximum";
+    private static final String MIN = "minimum";
+    private static final String ATTEMPS = "attempts";
+
     private final DrawNumber model;
     private final List<DrawNumberView> views;
 
@@ -31,9 +36,9 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
         }
         final Configuration.Builder configBuilder = new Configuration.Builder();
         final Map<String, Consumer<Integer>> configLoader = Map.of(
-            "maximum", configBuilder::setMax,
-            "minimum", configBuilder::setMin,
-            "attempts", configBuilder::setAttempts
+            MAX, configBuilder::setMax,
+            MIN, configBuilder::setMin,
+            ATTEMPS, configBuilder::setAttempts
         );
         Configuration config = readConfiguration(configPath, configLoader, configBuilder);
         if (!config.isConsistent()) {
@@ -53,9 +58,10 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * it is up to the caller to handle an inconsisten config (not load game or load a default config)
      */
     private Configuration readConfiguration(
-            String path,
-            Map<String, Consumer<Integer>> loader,
-            Configuration.Builder builder) { 
+        String path,
+        Map<String, Consumer<Integer>> loader,
+        Configuration.Builder builder
+    ) { 
         
         try (BufferedReader br = new BufferedReader(
             new InputStreamReader(ClassLoader.getSystemResourceAsStream(path),
@@ -66,16 +72,20 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
                 .forEach(line -> {
                     final String[] splitLine = line.split(":");
                     final String option = splitLine[0].trim();
-                    final int value = Integer.parseInt(splitLine[1].trim());
-
-                    final Consumer<Integer> handler = loader.get(option);
-                    if (handler != null) {
-                        handler.accept(value);
-                    } else {
-                        showError("unknown option provided");
+                    final int value;
+                    try {
+                        value = Integer.parseInt(splitLine[1].trim());
+                        final Consumer<Integer> handler = loader.get(option);
+                        if (handler != null) {
+                            handler.accept(value);
+                        } else {
+                            showError("unknown option provided");
+                        }
+                    } catch (final NumberFormatException ex) {
+                        showError("invalid value for " + option + " using default");
                     }
                 });
-        } catch (final IOException | NumberFormatException | NullPointerException ex) {
+        } catch (final IOException | NullPointerException ex) {
             showError(ex.getMessage());
         }
         return builder.build();
@@ -126,7 +136,13 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @throws FileNotFoundException 
      */
     public static void main(final String... args) throws FileNotFoundException {
-        new DrawNumberApp("config.yml", new DrawNumberViewImpl());
+        new DrawNumberApp(
+            "config.yml",
+            new DrawNumberViewImpl(),
+            new DrawNumberViewImpl(),
+            new PrintStreamView(System.out),
+            new PrintStreamView(new PrintStream("out.txt"))
+        );
     }
 
 }
